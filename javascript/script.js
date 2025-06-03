@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Get references to DOM elements
+  // Lấy các phần tử DOM cần thiết
   const gameContainer = document.getElementById('game');
   const difficultySelector = document.getElementById('difficulty');
   const bombCounter = document.getElementById('bomb-counter');
   const timerCounter = document.getElementById('timer-counter');
 
-  // Game configuration for each difficulty
+  // Cấu hình trò chơi cho từng mức độ
   const config = {
     easy:   { rows: 12, cols: 12, mines: 48 },
     medium: { rows: 16, cols: 16, mines: 80 },
     hard:   { rows: 18, cols: 18, mines: 99 }
   };
 
-  // Game state variables
+  // Biến trạng thái trò chơi
   let board = [];
   let gameOver = false;
   let firstMove = true;
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let seconds = 0;
   let boardHistory = [];
 
-  // Timer functions
+  // Hàm liên quan đến bộ đếm thời gian
   function startTimer(callback) {
     stopTimer();
     seconds = 0;
@@ -40,12 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
     callback(seconds);
   }
 
-  // Deep clone the board for undo functionality
+  // Tạo bản sao sâu của bàn cờ để dùng cho chức năng hoàn tác
   function cloneBoard(board) {
     return board.map(row => row.map(cell => ({ ...cell })));
   }
 
-  // Save the current state for undo
+  // Lưu trạng thái hiện tại để hoàn tác
   function saveHistory() {
     boardHistory.push({
       board: cloneBoard(board),
@@ -53,11 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
       firstMove,
       seconds
     });
-    // Limit history to last 20 moves
+    // Giới hạn lịch sử 20 bước gần nhất
     if (boardHistory.length > 20) boardHistory.shift();
   }
 
-  // Undo the last move
+  // Hoàn tác nước đi trước
   function undoMove() {
     if (boardHistory.length === 0) return;
     const last = boardHistory.pop();
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateTimerDisplay(seconds);
   }
 
-  // Update the bomb counter display
+  // Cập nhật bộ đếm bom
   function updateBombCounter() {
     const { mines } = config[difficultySelector.value];
     let flagged = 0;
@@ -81,15 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
     bombCounter.textContent = String(mines - flagged).padStart(3, '0');
   }
 
-  // Update the timer display
+  // Cập nhật bộ đếm thời gian
   function updateTimerDisplay(seconds) {
     timerCounter.textContent = String(seconds).padStart(3, '0');
   }
 
-  // Responsive resizing for the board and cells
+  // Tự động thay đổi kích thước bàn cờ và ô khi thay đổi kích thước cửa sổ
   function resizeBoard() {
     const { cols } = config[difficultySelector.value];
-    // Calculate max width for the board (leave some margin)
+    // Tính toán chiều rộng tối đa cho bàn cờ (chừa lề)
     const maxWidth = Math.min(window.innerWidth - 60, cols * 36 + 40);
     const cellSize = Math.max(24, Math.floor((maxWidth - (cols - 1) * 2) / cols));
     gameContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Render the game board based on the current state
+  // Vẽ lại bàn cờ dựa trên trạng thái hiện tại
   function renderBoard() {
     const { rows, cols } = config[difficultySelector.value];
     gameContainer.innerHTML = '';
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cellDiv.classList.add('cell');
         cellDiv.dataset.row = r;
         cellDiv.dataset.col = c;
-        // Show revealed state
+        // Hiển thị trạng thái đã mở
         if (cell.revealed) {
           cellDiv.style.backgroundColor = '#bbb';
           if (cell.isMine) {
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (cell.flagged) {
           cellDiv.textContent = '🚩';
         }
-        // Add event listeners for click and right-click
+        // Thêm sự kiện click và click chuột phải
         cellDiv.addEventListener('click', () => {
           revealCell(r, c, cellDiv);
         });
@@ -136,20 +136,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     updateBombCounter();
-    resizeBoard(); // Smoothly resize after rendering
+    resizeBoard(); // Tự động thay đổi kích thước sau khi vẽ lại
   }
 
-  // Create a new board for the selected difficulty
+  // Tạo bàn cờ mới theo mức độ đã chọn
   function createBoard(level) {
     const { rows, cols, mines } = config[level];
     gameContainer.innerHTML = '';
-    gameContainer.style.gridTemplateColumns = `repeat(${cols}, 36px)`; // updated size
+    gameContainer.style.gridTemplateColumns = `repeat(${cols}, 36px)`; // cập nhật kích thước
     gameOver = false;
     firstMove = true;
     resetTimer(updateTimerDisplay);
     boardHistory = [];
 
-    // Initialize board array
+    // Khởi tạo mảng bàn cờ
     board = Array.from({ length: rows }, () =>
       Array.from({ length: cols }, () => ({
         isMine: false,
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }))
     );
 
-    // Place random mines
+    // Đặt mìn ngẫu nhiên
     let placedMines = 0;
     while (placedMines < mines) {
       const r = Math.floor(Math.random() * rows);
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Calculate adjacent mines for each cell
+    // Tính số mìn xung quanh cho từng ô
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         if (board[r][c].isMine) continue;
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBoard();
   }
 
-  // Reveal a cell and handle game logic
+  // Mở một ô và xử lý logic trò chơi
   function revealCell(r, c, cellDiv) {
     if (gameOver) return;
     saveHistory();
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBoard();
   }
 
-  // Reveal all connected empty cells (flood fill)
+  // Mở tất cả các ô trống liên tiếp (flood fill)
   function floodReveal(r, c) {
     const { rows, cols } = config[difficultySelector.value];
     const queue = [[r, c]];
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Reveal all mines when the game is over
+  // Mở tất cả các mìn khi thua
   function revealAllMines() {
     for (let r = 0; r < board.length; r++) {
       for (let c = 0; c < board[0].length; c++) {
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBoard();
   }
 
-  // Check if the player has won
+  // Kiểm tra thắng cuộc
   function checkWin() {
     for (let r = 0; r < board.length; r++) {
       for (let c = 0; c < board[0].length; c++) {
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   }
 
-  // Create and add the Play Again and Undo buttons in a button bar under the board
+  // Tạo và thêm nút "Chơi lại" và "Hoàn tác" vào dưới bàn cờ
   let buttonBar = document.getElementById('button-bar');
   if (!buttonBar) {
     buttonBar = document.createElement('div');
@@ -304,15 +304,15 @@ document.addEventListener('DOMContentLoaded', () => {
     buttonBar.className = 'button-bar';
     gameContainer.parentNode.parentNode.appendChild(buttonBar);
   }
-  buttonBar.innerHTML = ''; // Clear previous buttons
+  buttonBar.innerHTML = ''; // Xóa các nút cũ nếu có
 
-  // Play Again button
+  // Nút "Chơi lại"
   let playAgainBtn = document.createElement('button');
   playAgainBtn.id = 'play-again-btn';
   playAgainBtn.textContent = 'Play Again';
   buttonBar.appendChild(playAgainBtn);
 
-  // Undo button
+  // Nút "Hoàn tác"
   let undoBtn = document.createElement('button');
   undoBtn.id = 'undo-btn';
   undoBtn.textContent = 'Undo';
@@ -323,23 +323,32 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   undoBtn.onclick = undoMove;
 
-  // Toggle flag on right-click
+  // Đặt hoặc gỡ cờ khi nhấn chuột phải
   function toggleFlag(r, c, cellDiv) {
     if (gameOver) return;
     saveHistory();
     const cell = board[r][c];
     if (cell.revealed) return;
+    // Đếm số cờ đã đặt
+    let flagged = 0;
+    for (let i = 0; i < board.length; i++) {
+      for (let j = 0; j < board[0].length; j++) {
+        if (board[i][j].flagged) flagged++;
+      }
+    }
+    // Chỉ cho phép đặt cờ nếu chưa vượt quá số mìn hoặc đang gỡ cờ
+    if (!cell.flagged && flagged >= config[difficultySelector.value].mines) return;
     cell.flagged = !cell.flagged;
     renderBoard();
   }
 
-  // Initial load
+  // Khởi tạo lần đầu
   createBoard(difficultySelector.value);
 
-  // Smooth resize on window resize
+  // Tự động thay đổi kích thước khi thay đổi kích thước cửa sổ
   window.addEventListener('resize', resizeBoard);
 
-  // Change board on difficulty selection
+  // Đổi mức độ chơi
   difficultySelector.addEventListener('change', (e) => {
     const level = e.target.value;
     createBoard(level);
